@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:chopper/chopper.dart';
@@ -10,10 +12,19 @@ import 'package:my_weather/colors/background_gradients.dart';
 import 'package:my_weather/data/weather_api_service.dart';
 import 'package:provider/provider.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _Home createState() => _Home();
+}
+
+class _Home extends State<HomePage> {
   var gradient = BackgroundGradientColors();
 
   final String appKey = 'df7f38f0d174720b53e452fca216e5db';
+
+  Map<String, dynamic> fiveDayForecastMap = new Map();
+  List<String> mapKeys;
+  int mapKeyLength = 0;
 
   Map<String, dynamic> coord;
 
@@ -72,12 +83,12 @@ class HomePage extends StatelessWidget {
         }
       },
     );*/
-    _getForecastData(context);
 
+    _getForecastData(context);
 
     return FutureBuilder<Response>(
       future: Provider.of<WeatherApiService>(context)
-          .getWeatherInfo('Dhaka', appKey),
+          .getWeatherInfo(cityName, appKey),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           //print('response success');
@@ -213,6 +224,11 @@ class HomePage extends StatelessWidget {
                               thickness: 2,
                               color: Colors.white,
                             ),
+                            Container(child: _bindForeCastData(context, 0)),
+                            Container(child: _bindForeCastData(context, 1)),
+                            Container(child: _bindForeCastData(context, 2)),
+                            Container(child: _bindForeCastData(context, 3)),
+                            Container(child: _bindForeCastData(context, 4)),
                           ],
                         )),
                   ),
@@ -221,27 +237,128 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  String string = 'shaiful';
 
+  dynamic _bindForeCastData(BuildContext context, int index) {
+    if (mapKeys != null) {
+      print('map keys length: ' + mapKeys.length.toString());
+    }
+    if (mapKeyLength > index) {
+      var weather = fiveDayForecastMap[mapKeys[index]];
+      return Row(
+        children: [
+          Expanded(flex: 5, child: Container(
+            child: Text(
+              _getFormatedDate(fiveDayForecastMap[mapKeys[index]]['dt']),
+              style: GoogleFonts.lato(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+          ),),
+          Expanded(flex: 4, child: Container(
+            //margin: EdgeInsets.only(left: 30, right: 30),
+            height: 60,
+            width: 60,
+            child: Image.network(_getImageUrl(fiveDayForecastMap[mapKeys[index]]
+            ['weather'][0]['icon']
+                .toString())),
+          ),),
+          Expanded(flex: 2, child: Container(
+            //max temparature
+            child: Text(
+              _getFormatedTemp(fiveDayForecastMap[mapKeys[index]]['main']['temp_max']),
+              style: GoogleFonts.lato(color: Colors.white, fontSize: 16),
+            ),
+          ),),
+          Expanded(flex: 2, child: Container(
+            //margin: EdgeInsets.only(left: 20),
+            //min temparature
+            child: Text(
+              _getFormatedTemp(fiveDayForecastMap[mapKeys[index]]['main']['temp_min']),
+              style: GoogleFonts.lato(color: Colors.white, fontSize: 16),
+            ),
+          ),),
+
+        ],
+      );
+    } else {
+      //_getForecastData(context);
+      return Text(
+        string,
+        style: TextStyle(color: Colors.white),
+      );
+    }
+  }
 
   void _getForecastData(BuildContext context) async {
     print('getForecast Method called');
     final response = await Provider.of<WeatherApiService>(context)
-    .getForecast('23.7104', '90.4074' ,appKey);
+        .getForecast('23.7104', '90.4074', appKey);
 
-    if(response.isSuccessful){
-      //print('response success');
-      print(response.body);
-    }else{
-      //print('response failed');
+    if (response.isSuccessful) {
+      print('forecast response success');
+
+      var forecastResponse = response.body;
+      var forecastList = forecastResponse['list'];
+
+      for (var forecast in forecastList) {
+        String month = _getFormatedDate(forecast['dt']);
+        fiveDayForecastMap[month] = forecast;
+        //log(month);
+      }
+
+      mapKeys = new List();
+      for (var key in fiveDayForecastMap.keys) {
+        mapKeys.add(key);
+      }
+      mapKeyLength = mapKeys.length;
+      //string = 'shaiful islam';
+
+      log('map keys' + mapKeys.toString());
+
+      //build(context);
+      //setState();
+
+    } else {
+      print('forecast response failed');
     }
-
   }
 
   String _getImageUrl(String icon) {
     return 'http://openweathermap.org/img/wn/${icon}@2x.png';
   }
 
+  String _getFormatedDate(var date) {
+    var result = DateTime.fromMillisecondsSinceEpoch(date * 1000);
+    var div = result.toString().split(' ');
+    var dateDiv = div[0].toString().split('-');
+    String month = dateDiv[1];
+    if (month.length == 2 && month[0] == '0') {
+      month = month[1];
+    }
+    return _getMonthNameFromNumber(month) +
+        ' ' +
+        dateDiv[2] +
+        ', ' +
+        dateDiv[0];
+  }
+
   String _getCurrentDateTime(String type) {
+    var now = DateTime.now();
+    var date = DateFormat('yMd').format(now);
+    var part = date.toString().split('/');
+    String result =
+        _getMonthNameFromNumber(part[0]) + ' ' + part[1] + ', ' + part[2];
+    var time = DateFormat('jm').format(now);
+
+    if (type == 'time')
+      return time;
+    else
+      return result;
+  }
+
+  String _getMonthNameFromNumber(String number) {
     var names = [
       'Jan',
       'Feb',
@@ -256,36 +373,12 @@ class HomePage extends StatelessWidget {
       'Nov',
       'Dec'
     ];
-    var now = DateTime.now();
-    var date = DateFormat('yMd').format(now);
-    var part = date.toString().split('/');
-    String result = names[int.parse(part[0])] + ' ' + part[1] + ', ' + part[2];
-    var time = DateFormat('jm').format(now);
+    return names[int.parse(number)];
+  }
 
-    if (type == 'time')
-      return time;
-    else
-      return result;
+  String _getFormatedTemp(double temp){
+    temp = (temp - 273.15);
+    String result = temp.toStringAsFixed(1);
+    return result + ' \u00B0';
   }
 } // end of class
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -13,6 +13,7 @@ class MyApp extends StatelessWidget {
       create: (_) => WeatherApiService.create(),
       dispose: (_, WeatherApiService service) => service.client.dispose,
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         theme: ThemeData(
           primaryColor: Colors.blue,
