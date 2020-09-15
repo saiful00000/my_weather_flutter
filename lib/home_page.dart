@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:chopper/chopper.dart';
 import 'package:flutter/material.dart';
@@ -59,11 +58,11 @@ class _Home extends State<HomePage> {
           )
         ),
       ),*/
-      body: _BuildBody(context),
+      body: _buildBody(context),
     );
   }
 
-  FutureBuilder<Response> _BuildBody(BuildContext context) {
+  FutureBuilder<Response> _buildBody(BuildContext context) {
     /*return FutureBuilder<Response>(
       future: Provider.of<WeatherApiService>(context)
           .getWeatherInfo('Dhaka', 'df7f38f0d174720b53e452fca216e5db'),
@@ -249,7 +248,7 @@ class _Home extends State<HomePage> {
         children: [
           Expanded(flex: 5, child: Container(
             child: Text(
-              _getFormatedDate(fiveDayForecastMap[mapKeys[index]]['dt']),
+              _getFormatedDate(weather['dt']),
               style: GoogleFonts.lato(
                 color: Colors.white,
                 fontSize: 16,
@@ -260,14 +259,14 @@ class _Home extends State<HomePage> {
             //margin: EdgeInsets.only(left: 30, right: 30),
             height: 60,
             width: 60,
-            child: Image.network(_getImageUrl(fiveDayForecastMap[mapKeys[index]]
+            child: Image.network(_getImageUrl(weather
             ['weather'][0]['icon']
                 .toString())),
           ),),
           Expanded(flex: 2, child: Container(
             //max temparature
             child: Text(
-              _getFormatedTemp(fiveDayForecastMap[mapKeys[index]]['main']['temp_max']),
+              _getFormatedTemp(weather['main']['temp_max']),
               style: GoogleFonts.lato(color: Colors.white, fontSize: 16),
             ),
           ),),
@@ -275,7 +274,7 @@ class _Home extends State<HomePage> {
             //margin: EdgeInsets.only(left: 20),
             //min temparature
             child: Text(
-              _getFormatedTemp(fiveDayForecastMap[mapKeys[index]]['main']['temp_min']),
+              _getFormatedTemp(weather['main']['temp_min']),
               style: GoogleFonts.lato(color: Colors.white, fontSize: 16),
             ),
           ),),
