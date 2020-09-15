@@ -325,7 +325,7 @@ class _Home extends State<HomePage> {
   }
 
   String _getImageUrl(String icon) {
-    return 'http://openweathermap.org/img/wn/${icon}@2x.png';
+    return 'http://openweathermap.org/img/wn/$icon@2x.png';
   }
 
   String _getFormatedDate(var date) {
